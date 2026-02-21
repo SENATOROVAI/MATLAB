@@ -2,185 +2,169 @@ clc;
 clear;
 close all;
 
-
-
+%% Параметры
 s = tf('s');
 Tu = 1;
 
-% Передаточная функция разомкнутой системы
-W_open = 1/(Tu*s*(Tu*s+1));
-
-% Замыкаем систему по единичной обратной связи
-W_closed = feedback(W_open,1);
-
-% Строим переходной процесс
-figure;
-[y,t] = step(W_closed);
-plot(t,y,'LineWidth',1.5);
-grid on;
-title('Переходной процесс — Линейный оптимум');
-xlabel('Время, c');
-ylabel('y(t)');
-
-
 folder = fullfile(pwd,'figures');
-
 if ~exist(folder,'dir')
     mkdir(folder);
 end
 
-saveas(gcf, fullfile(folder,'Fig_1_1_StepResponse_Linear.png'));
+%% ============================================
+%% 1. ЛИНЕЙНЫЙ ОПТИМУМ
+%% ============================================
 
-info2 = stepinfo(W_closed,'SettlingTimeThreshold',0.02);
-info5 = stepinfo(W_closed,'SettlingTimeThreshold',0.05);
+W_open_lin = 1/(Tu*s*(Tu*s+1));
+W_closed_lin = feedback(W_open_lin,1);
 
-tp2 = info2.SettlingTime;
-tp5 = info5.SettlingTime;
-overshoot = info2.Overshoot;
+%% Переходный процесс
+figure;
+step(W_closed_lin);
+grid on;
+title('Линейный оптимум');
+saveas(gcf, fullfile(folder,'Lin_Step.png'));
 
-fprintf('tp2 = %.4f c\n', tp2);
-fprintf('tp5 = %.4f c\n', tp5);
-fprintf('Перерегулирование = %.2f %%\n', overshoot);
+info2 = stepinfo(W_closed_lin,'SettlingTimeThreshold',0.02);
+info5 = stepinfo(W_closed_lin,'SettlingTimeThreshold',0.05);
 
-% Биномиальный оптимум
+%% ============================================
+%% 2. БИНОМИАЛЬНЫЙ ОПТИМУМ (ЭТАЛОННАЯ ЗАМКНУТАЯ МОДЕЛЬ)
+%% ============================================
 
-W_bin = 1/(Tu*s + 1)^2;
+W_closed_bin = 1/(Tu*s + 1)^2;
+
+% Восстанавливаем разомкнутую систему для построения ЛАЧХ
+W_open_bin = W_closed_bin/(1 - W_closed_bin);
 
 figure;
-[y_bin,t_bin] = step(W_bin);
-plot(t_bin,y_bin,'LineWidth',1.5);
+step(W_closed_bin);
 grid on;
-title('Переходной процесс — Биномиальный оптимум');
-xlabel('Время, c');
-ylabel('y(t)');
+title('Биномиальный оптимум');
+saveas(gcf, fullfile(folder,'Bin_Step.png'));
 
-saveas(gcf, fullfile(folder,'Fig_1_3_StepResponse_Binomial.png'));
+info2_bin = stepinfo(W_closed_bin,'SettlingTimeThreshold',0.02);
+info5_bin = stepinfo(W_closed_bin,'SettlingTimeThreshold',0.05);
 
-info2_bin = stepinfo(W_bin,'SettlingTimeThreshold',0.02);
-info5_bin = stepinfo(W_bin,'SettlingTimeThreshold',0.05);
+%% ============================================
+%% 3. ОПТИМУМ ПО МОДУЛЮ
+%% ============================================
 
-tp2_bin = info2_bin.SettlingTime;
-tp5_bin = info5_bin.SettlingTime;
-overshoot_bin = info2_bin.Overshoot;
-
-fprintf('\nБиномиальный оптимум\n');
-fprintf('tp2 = %.4f c\n', tp2_bin);
-fprintf('tp5 = %.4f c\n', tp5_bin);
-fprintf('Перерегулирование = %.2f %%\n', overshoot_bin);
-
-W_mod = 1/(2*Tu*s*(Tu*s+1));
-
-W_mod_closed = feedback(W_mod,1);
+W_open_mod = 1/(2*Tu*s*(Tu*s+1));
+W_closed_mod = feedback(W_open_mod,1);
 
 figure;
-[y_mod,t_mod] = step(W_mod_closed);
-plot(t_mod,y_mod,'LineWidth',1.5);
+step(W_closed_mod);
 grid on;
-title('Переходной процесс — Оптимум по модулю');
-xlabel('Время, c');
-ylabel('y(t)');
+title('Оптимум по модулю');
+saveas(gcf, fullfile(folder,'Mod_Step.png'));
 
-saveas(gcf, fullfile(folder,'Fig_1_5_StepResponse_Modulus.png'));
+info2_mod = stepinfo(W_closed_mod,'SettlingTimeThreshold',0.02);
+info5_mod = stepinfo(W_closed_mod,'SettlingTimeThreshold',0.05);
 
-info2_mod = stepinfo(W_mod_closed,'SettlingTimeThreshold',0.02);
-info5_mod = stepinfo(W_mod_closed,'SettlingTimeThreshold',0.05);
+%% ============================================
+%% 4. СИММЕТРИЧНЫЙ ОПТИМУМ
+%% ============================================
 
-tp2_mod = info2_mod.SettlingTime;
-tp5_mod = info5_mod.SettlingTime;
-overshoot_mod = info2_mod.Overshoot;
-
-fprintf('\nОптимум по модулю\n');
-fprintf('tp2 = %.4f c\n', tp2_mod);
-fprintf('tp5 = %.4f c\n', tp5_mod);
-fprintf('Перерегулирование = %.2f %%\n', overshoot_mod);
-
-W_sym = 1/(Tu*s*(Tu*s+1)^2);
-W_sym_closed = feedback(W_sym,1);
+W_open_sym = 1/(Tu*s*(Tu*s+1)^2);
+W_closed_sym = feedback(W_open_sym,1);
 
 figure;
-[y_sym,t_sym] = step(W_sym_closed);
-plot(t_sym,y_sym,'LineWidth',1.5);
+step(W_closed_sym);
 grid on;
-title('Переходной процесс — Симметричный оптимум');
-xlabel('Время, c');
-ylabel('y(t)');
+title('Симметричный оптимум');
+saveas(gcf, fullfile(folder,'Sym_Step.png'));
 
-saveas(gcf, fullfile(folder,'Fig_1_6_StepResponse_Symmetric.png'));
+info2_sym = stepinfo(W_closed_sym,'SettlingTimeThreshold',0.02);
+info5_sym = stepinfo(W_closed_sym,'SettlingTimeThreshold',0.05);
 
-info2_sym = stepinfo(W_sym_closed,'SettlingTimeThreshold',0.02);
-info5_sym = stepinfo(W_sym_closed,'SettlingTimeThreshold',0.05);
+%% ============================================
+%% 5. АСТАТИЗМ 3 ПОРЯДКА
+%% ============================================
 
-tp2_sym = info2_sym.SettlingTime;
-tp5_sym = info5_sym.SettlingTime;
-overshoot_sym = info2_sym.Overshoot;
-
-fprintf('\nСимметричный оптимум\n');
-fprintf('tp2 = %.4f c\n', tp2_sym);
-fprintf('tp5 = %.4f c\n', tp5_sym);
-fprintf('Перерегулирование = %.2f %%\n', overshoot_sym);
-
-W_ast = 1/(Tu*s)^3;
-W_ast_closed = feedback(W_ast,1);
+W_open_ast = 1/(Tu*s)^3;
+W_closed_ast = feedback(W_open_ast,1);
 
 figure;
-[y_ast,t_ast] = step(W_ast_closed);
-plot(t_ast,y_ast,'LineWidth',1.5);
+step(W_closed_ast);
 grid on;
-title('Переходной процесс — Астатизм 3-го порядка');
-xlabel('Время, c');
-ylabel('y(t)');
+title('Астатизм 3 порядка');
+saveas(gcf, fullfile(folder,'Ast_Step.png'));
 
-saveas(gcf, fullfile(folder,'Fig_1_7_StepResponse_Astatism3.png'));
+info2_ast = stepinfo(W_closed_ast,'SettlingTimeThreshold',0.02);
+info5_ast = stepinfo(W_closed_ast,'SettlingTimeThreshold',0.05);
 
-info2_ast = stepinfo(W_ast_closed,'SettlingTimeThreshold',0.02);
-info5_ast = stepinfo(W_ast_closed,'SettlingTimeThreshold',0.05);
+%% ============================================
+%% ТАБЛИЦА 1
+%% ============================================
 
-tp2_ast = info2_ast.SettlingTime;
-tp5_ast = info5_ast.SettlingTime;
-overshoot_ast = info2_ast.Overshoot;
+fprintf('\nТАБЛИЦА 1\n');
+fprintf('Модель | tp5/Tu | tp2/Tu | Overshoot\n');
 
-fprintf('\nАстатизм 3 порядка\n');
-fprintf('tp2 = %.4f c\n', tp2_ast);
-fprintf('tp5 = %.4f c\n', tp5_ast);
-fprintf('Перерегулирование = %.2f %%\n', overshoot_ast);
+fprintf('Линейный | %.4f | %.4f | %.2f\n', ...
+    info5.SettlingTime/Tu, info2.SettlingTime/Tu, info2.Overshoot);
 
-figure;
-margin(W_open);
-grid on;
-title('ЛАЧХ и ФЧХ — Линейный оптимум');
+fprintf('Биномиальный | %.4f | %.4f | %.2f\n', ...
+    info5_bin.SettlingTime/Tu, info2_bin.SettlingTime/Tu, info2_bin.Overshoot);
 
-saveas(gcf, fullfile(folder,'Fig_1_8_Bode_Linear.png'));
+fprintf('По модулю | %.4f | %.4f | %.2f\n', ...
+    info5_mod.SettlingTime/Tu, info2_mod.SettlingTime/Tu, info2_mod.Overshoot);
 
-[gm, pm, wg, wp] = margin(W_open);
+fprintf('Симметричный | %.4f | %.4f | %.2f\n', ...
+    info5_sym.SettlingTime/Tu, info2_sym.SettlingTime/Tu, info2_sym.Overshoot);
 
-fprintf('\nЧастотные характеристики (Линейный оптимум)\n');
-fprintf('Запас по амплитуде = %.2f dB\n', 20*log10(gm));
-fprintf('Запас по фазе = %.2f град\n', pm);
+fprintf('Астатизм 3 | %.4f | %.4f | %.2f\n', ...
+    info5_ast.SettlingTime/Tu, info2_ast.SettlingTime/Tu, info2_ast.Overshoot);
+
+%% ============================================
+%% ЛАЧХ И ЗАПАСЫ УСТОЙЧИВОСТИ
+%% ============================================
+
+models = {W_open_lin, W_open_bin, W_open_mod, W_open_sym, W_open_ast};
+names = {'Lin','Bin','Mod','Sym','Ast'};
+
+fprintf('\nТАБЛИЦА 3\n');
+fprintf('Модель | GM(dB) | PM(deg) | M\n');
+
+for i = 1:length(models)
+    
+    figure;
+    margin(models{i});
+    grid on;
+    saveas(gcf, fullfile(folder, strcat(names{i},'_Bode.png')));
+    
+    [gm,pm,~,~] = margin(models{i});
+    
+    Wcl = feedback(models{i},1);
+    [mag,~,~] = bode(Wcl);
+    M = max(squeeze(mag));
+    
+    fprintf('%s | %.2f | %.2f | %.2f\n', ...
+        names{i}, 20*log10(gm), pm, M);
+end
+
+%% ============================================
+%% ТАБЛИЦА 2 (g = vt, g = at^2)
+%% ============================================
 
 t = 0:0.01:20;
-
 v = 1;
 a = 1;
 
-g1 = v*t;        % g = vt
-g2 = a*t.^2;     % g = at^2
+g1 = v*t;
+g2 = a*t.^2;
 
-% Линейный оптимум
-y1_lin = lsim(W_closed,g1,t);
-y2_lin = lsim(W_closed,g2,t);
+systems = {W_closed_lin, W_closed_bin, W_closed_mod, W_closed_sym, W_closed_ast};
 
-figure;
-plot(t,g1,'--',t,y1_lin,'LineWidth',1.5);
-grid on;
-title('Линейный оптимум — g = vt');
-saveas(gcf, fullfile(folder,'Fig_Table2_Linear_vt.png'));
+fprintf('\nТАБЛИЦА 2 (ошибки установившиеся)\n');
 
-figure;
-plot(t,g2,'--',t,y2_lin,'LineWidth',1.5);
-grid on;
-title('Линейный оптимум — g = at^2');
-saveas(gcf, fullfile(folder,'Fig_Table2_Linear_at2.png'));
-
-
-
-
+for i = 1:length(systems)
+    
+    y1 = lsim(systems{i},g1,t);
+    y2 = lsim(systems{i},g2,t);
+    
+    e1 = abs(g1(end)-y1(end));
+    e2 = abs(g2(end)-y2(end));
+    
+    fprintf('%s | e(vt)=%.4f | e(at2)=%.4f\n', names{i}, e1, e2);
+end
